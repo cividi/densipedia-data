@@ -8,10 +8,9 @@ class DensipediaCasesSpider(CSVFeedSpider):
     start_urls = [f'file://{DIR}/densipedia/data/densipedia.csv']
 
     def parse_row(self, response, row):
-        yield response.follow(f'https://www.densipedia.ch/{row["slug"]}', callback=self.parse_content)
+        yield response.follow(f'https://www.densipedia.ch/{row["slug"]}', callback=self.parse_content, cb_kwargs=dict(row=row))
 
-    def parse_content(self, response):
-        print(self)
+    def parse_content(self, response, row):
         infoboxes = response.css('div.paragraph--type--infobox div')
         for infobox in infoboxes:
             if infobox.css('h3::text').get() == 'Kennziffern':
@@ -77,10 +76,12 @@ class DensipediaCasesSpider(CSVFeedSpider):
                         fact_value = fact_value.replace('\'','')
                         fact_value = fact_value.replace('rund ','')
                         facts_parsed[fact_key] = fact_value
+                        facts_parsed['slug'] = row['slug']
                 yield facts_parsed
 
 
 keys = [
+    'slug',
     'Anzahl Arbeitsplätze', # 'Arbeitsplatzpotenzial',
     'Anzahl Bewohner', # 'Einwohnerpotenzial', 'Einwohnerzahl',
     'Einwohnerdichte',
